@@ -8,7 +8,7 @@ setup(
     description='ESPN data analysis',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url='https://github.com/jon-cheng/espnff',
+    # url='https://github.com/jon-cheng/espnff',
     packages=find_packages(),
     classifiers=[
         'Programming Language :: Python :: 3',

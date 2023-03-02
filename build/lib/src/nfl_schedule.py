@@ -29,11 +29,6 @@ def format_nfl_schedule(df, df_proteam_names):
     df = df[['Week', 'Date', 'Winner/tie', 'Loser/tie']]
     df = pd.melt(df, id_vars=['Week', 'Date'], value_vars=['Winner/tie', 'Loser/tie'], var_name='Winner_Loser',
                  value_name='Pro_team')
-    df = df.dropna(subset='Pro_team', axis=0)
-
-    # handle special case of Washington, because the team name has changed over years
-    df['Pro_team'] = df['Pro_team'].str.replace(pat=r'^Washington.*', repl='Washington')
-
     df['Pro_team_abbrev'] = df['Pro_team'].map(dict(zip(df_proteam_names['Pro Team Name'], df_proteam_names['Abbrev'])))
     df = df[df['Pro_team'].isin(df_proteam_names['Pro Team Name'].tolist())]
 
