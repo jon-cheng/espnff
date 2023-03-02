@@ -140,15 +140,33 @@ def build_df_acq(acq_data_flat_ls):
 
     return df_acq.sort_values(by=['Timestamp'], ascending=True)
 
-#
-# # Football Import
-# year_of_interest=2022
-# league_id = 1094090
-# # year = 2022
-#
-# SWID="{F191FB8C-DB2D-4D24-91FB-8CDB2DED249D}"
-#
-# s2='AECJMQHsUHB0FTXdZkw93uY7GRbX8BPnm93Ye6AwvwrMsrZFGg1Lbmi07SWVov2ioN8zGMFDzZiiDSeQCa7WQHaGivGnMfGWLjmfGwkOeLXb5baD1sltp%2B%2BIfHAtl98TpmHgB16ZpGn6g3Bm5vLEA7yDC6HkbD3LSp0E2rGB7hKziLMvZ7mT6ONJFRe8Xp3ApYWSvxPr9cz0pJiI%2FF0blsZ8hyATDJMEyaQ2O%2FypcsViORr6hqYTmXHPuPKnMBfvYC8LQqi1exGw3vnyg6ptsB2Y'
-# activity_ls = fetch_espn_api(league_id=league_id, year=year_of_interest, espn_s2=s2, swid=SWID)
-#
-# print('done')
+
+def build_df_draft(league):
+    """
+    Generates Draft DataFrame
+    Args:
+        league:
+
+    Returns:
+        (pd DataFrame):
+
+    """
+    draft_ls = [(pick.playerName, pick.team.team_name, 'DRAFT ADDED', pick.bid_amount) for pick in league.draft]
+    return pd.DataFrame(draft_ls, columns=['Player', 'Acquired by', 'Action', 'Bid Amount ($)'])
+
+
+def build_df_rostered(league):
+    """
+    Get data of all currently fantasy league rostered players
+
+    Args:
+        league:
+
+    Returns:
+
+    """
+    rostered_players_ls = [(player.name, player.position, player.proTeam, player.total_points, team.team_name)
+                           for team in league.teams
+                           for player in team.roster]
+    return pd.DataFrame(rostered_players_ls,
+                        olumns=['Player' , 'Position' , 'Pro Team', 'Total points', 'Current Team'])
