@@ -20,6 +20,7 @@ def format_nfl_schedule(df, df_proteam_names):
 
     Args:
         df (_type_): _description_
+        df_proteam_names (pd DataFrame)
 
     Returns:
         _type_: _description_
