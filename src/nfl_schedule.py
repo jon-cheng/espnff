@@ -32,7 +32,7 @@ def format_nfl_schedule(df, df_proteam_names):
     df = df.dropna(subset='Pro_team', axis=0)
 
     # handle special case of Washington, because the team name has changed over years
-    df['Pro_team'] = df['Pro_team'].str.replace(pat=r'^Washington.*', repl='Washington')
+    df['Pro_team'] = df['Pro_team'].str.replace(pat=r'^Washington.*', repl='Washington', regex=True)
 
     df['Pro_team_abbrev'] = df['Pro_team'].map(dict(zip(df_proteam_names['Pro Team Name'], df_proteam_names['Abbrev'])))
     df = df[df['Pro_team'].isin(df_proteam_names['Pro Team Name'].tolist())]
