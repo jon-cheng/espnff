@@ -43,6 +43,7 @@ def flatten_list(_2d_list):
             flat_list.append(element)
     return flat_list
 
+
 # Function handling trade data
 
 
@@ -75,12 +76,19 @@ def get_trade_data(action, date_of_acq):
         # Build new tuple for TRADE ADDED
         player_id = player_name.name
         ProTeam = player_name.proTeam
-        action1 = 'TRADE ADDED'
+        action1 = "TRADE ADDED"
 
         # Build a second tuple for TRADE DROPPED
-        action2 = 'TRADE DROPPED'
+        action2 = "TRADE DROPPED"
 
-        acq_data1 = (date_of_acq, player_id, ProTeam, team_id_received, action1, bid_amount)
+        acq_data1 = (
+            date_of_acq,
+            player_id,
+            ProTeam,
+            team_id_received,
+            action1,
+            bid_amount,
+        )
         drop_data1 = (date_of_acq, player_id, ProTeam, team_id, action2, bid_amount)
 
         acq_data_ls.append(acq_data1)
@@ -119,7 +127,7 @@ def get_acq_ls(activity_ls):
 
             # determine if trade or waiver acquisition type
             ls = []
-            if action1 == 'TRADED':
+            if action1 == "TRADED":
                 ls = get_trade_data(action, date_of_acq)
             else:
                 ls = get_waiver_data(action, date_of_acq)
@@ -130,15 +138,22 @@ def get_acq_ls(activity_ls):
 
 def build_df_acq(acq_data_flat_ls):
     df_acq = pd.DataFrame(acq_data_flat_ls)
-    df_acq.columns = ['Timestamp', 'Player', 'ProTeam', 'Team', 'Action', 'Bid Amount ($)']
+    df_acq.columns = [
+        "Timestamp",
+        "Player",
+        "ProTeam",
+        "Team",
+        "Action",
+        "Bid Amount ($)",
+    ]
     # converts from milliseconds to date
     def convert_to_date(date_of_acq):
         d2 = datetime.date.fromtimestamp(date_of_acq / 1000.0)
         return d2
 
-    df_acq['Action Timestamp'] = df_acq['Timestamp'].apply(lambda x: convert_to_date(x))
+    df_acq["Action Timestamp"] = df_acq["Timestamp"].apply(lambda x: convert_to_date(x))
 
-    return df_acq.sort_values(by=['Timestamp'], ascending=True)
+    return df_acq.sort_values(by=["Timestamp"], ascending=True)
 
 
 def build_df_draft(league):
@@ -151,8 +166,13 @@ def build_df_draft(league):
         (pd DataFrame):
 
     """
-    draft_ls = [(pick.playerName, pick.team.team_name, 'DRAFT ADDED', pick.bid_amount) for pick in league.draft]
-    return pd.DataFrame(draft_ls, columns=['Player', 'Acquired by', 'Action', 'Bid Amount ($)'])
+    draft_ls = [
+        (pick.playerName, pick.team.team_name, "DRAFT ADDED", pick.bid_amount)
+        for pick in league.draft
+    ]
+    return pd.DataFrame(
+        draft_ls, columns=["Player", "Acquired by", "Action", "Bid Amount ($)"]
+    )
 
 
 def build_df_rostered(league):
@@ -165,11 +185,21 @@ def build_df_rostered(league):
     Returns: all rostered players dataframeg
 
     """
-    rostered_players_ls = [(player.name, player.position, player.proTeam, player.total_points, team.team_name)
-                           for team in league.teams
-                           for player in team.roster]
-    return pd.DataFrame(rostered_players_ls,
-                        columns=['Player' , 'Position' , 'Pro Team', 'Total points', 'Current Team'])
+    rostered_players_ls = [
+        (
+            player.name,
+            player.position,
+            player.proTeam,
+            player.total_points,
+            team.team_name,
+        )
+        for team in league.teams
+        for player in team.roster
+    ]
+    return pd.DataFrame(
+        rostered_players_ls,
+        columns=["Player", "Position", "Pro Team", "Total points", "Current Team"],
+    )
 
 
 def build_df_FA(league):
@@ -182,9 +212,18 @@ def build_df_FA(league):
         (pd DataFrame): free agents dataframe
 
     """
-    FA_players_ls = [(free_agent.name, free_agent.position, free_agent.proTeam, free_agent.total_points, 'Free agent')
-                     for free_agent in league.free_agents(size=1000000)
-                     ]
+    FA_players_ls = [
+        (
+            free_agent.name,
+            free_agent.position,
+            free_agent.proTeam,
+            free_agent.total_points,
+            "Free agent",
+        )
+        for free_agent in league.free_agents(size=1000000)
+    ]
 
-    return pd.DataFrame(FA_players_ls,
-                         columns=['Player', 'Position', 'Pro Team', 'Total points', 'Current Team'])
+    return pd.DataFrame(
+        FA_players_ls,
+        columns=["Player", "Position", "Pro Team", "Total points", "Current Team"],
+    )
