@@ -95,3 +95,14 @@ def get_nfl_schedule(
         .pipe(format_nfl_schedule, df_proteam_names)
         .pipe(get_wideform_nfl_schedule)
     )
+
+
+def get_season_start_date(df):
+    """
+    Args:
+        df: Wideform NFL schedule dataframe
+
+    Returns: (datetime object) NFL season start date
+
+    """
+    return pd.melt(df)[~pd.melt(df)['value'].isin(['BYE'])]['value'].min()
