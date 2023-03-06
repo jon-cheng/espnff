@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 
 
@@ -66,10 +67,23 @@ def get_wideform_nfl_schedule(df):
     df = df.astype({"Week": int})
     # pivot NFL schedule to wideform
     df = df[["Week", "Date", "Pro_team_abbrev"]]
-    df = df.pivot(index="Week", columns="Pro_team_abbrev", values="Date").fillna("BYE")
+    df = df.rename(columns={"Pro_team_abbrev":"ProTeam"})
+    df = df.pivot(index="Week", columns="ProTeam", values="Date")
+
     df = df.applymap(
-        lambda x: pd.to_datetime(x, format="%Y-%m-%d") if x != "BYE" else x
-    )
+        lambda x: pd.to_datetime(x, format="%Y-%m-%d") if not pd.isna(x) else x) \
+        .applymap(lambda x: pd.Timestamp(x) if not pd.isna(x) else x)
+
+
+    # df = df.pivot(index="Week", columns="ProTeam", values="Date").fillna("BYE")
+    # df = df.applymap(
+    #     lambda x: pd.to_datetime(x, format="%Y-%m-%d") if x != "BYE" else x
+    # )
+    # df = df.applymap(
+    #     lambda x: pd.Timestamp(x) if x != "BYE" else x
+    # )
+    #
+    # df = df.replace('BYE', np.nan)
     return df
 
 
@@ -89,6 +103,8 @@ def get_nfl_schedule(
     df_proteam_names = pd.read_csv(
         os.path.join(data_path, "team_abbrev_conversion.csv")
     )
+    for col in df_proteam_names.columns:
+        df_proteam_names[col] = df_proteam_names[col].str.strip()
 
     return (
         mine_nfl_schedule(year_of_interest=year_of_interest)

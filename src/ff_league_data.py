@@ -1,6 +1,6 @@
 import os
 import datetime as dt
-from datetime import timedelta
+import itertools
 import numpy as np
 import pandas as pd
 from espn_api.football import League
@@ -16,7 +16,7 @@ def fetch_espn_api(league_id, year, espn_s2, swid):
         espn_s2 (_type_): _description_
         swid (_type_): _description_
 
-    Returns:
+    Returns: league object on which further data parsing can be applied upon
     """
     return League(league_id=league_id, year=year, espn_s2=espn_s2, swid=swid)
 
@@ -157,12 +157,12 @@ def build_df_acq(acq_data_flat_ls):
     ]
     # converts from milliseconds to date
     def convert_to_date(date_of_acq):
-        d2 = datetime.date.fromtimestamp(date_of_acq / 1000.0)
+        d2 = dt.date.fromtimestamp(date_of_acq / 1000.0)
         return d2
 
     df_acq["Action Timestamp"] = df_acq["Timestamp"].apply(lambda x: convert_to_date(x))
-
-    return df_acq.sort_values(by=["Timestamp"], ascending=True)
+    df_acq = df_acq.sort_values(by=["Timestamp"], ascending=True)
+    return df_acq
 
 
 def build_df_draft(league):
@@ -179,9 +179,13 @@ def build_df_draft(league):
         (pick.playerName, pick.team.team_name, "DRAFT ADDED", pick.bid_amount)
         for pick in league.draft
     ]
-    return pd.DataFrame(
+    df_draft = pd.DataFrame(
         draft_ls, columns=["Player", "Acquired by", "Action", "Bid Amount ($)"]
     )
+
+    drafted_players = df_draft['Player'].tolist()
+
+    return df_draft, drafted_players
 
 
 def build_df_rostered(league):
@@ -205,10 +209,11 @@ def build_df_rostered(league):
         for team in league.teams
         for player in team.roster
     ]
-    return pd.DataFrame(
+    df_rostered = pd.DataFrame(
         rostered_players_ls,
         columns=["Player", "Position", "Pro Team", "Total points", "Current Team"],
     )
+    return df_rostered
 
 
 def build_df_FA(league):
@@ -232,21 +237,36 @@ def build_df_FA(league):
         for free_agent in league.free_agents(size=1000000)
     ]
 
-    return pd.DataFrame(
+    df_FA = pd.DataFrame(
         FA_players_ls,
         columns=["Player", "Position", "Pro Team", "Total points", "Current Team"],
     )
+    return df_FA
 
 
-def build_df_draft_acq(df_draft,df_player_stats):
-    return df_draft\
+def build_df_player_stats(df_rostered,df_FA):
+    """Join the rostered and free agent player universes to get all player stats"""
+    df_player_stats = pd.concat([df_rostered,df_FA],axis=0)
+    return df_player_stats
+
+
+def build_df_draft_stats(df_draft,df_player_stats):
+    """Merge draft data with player stats fields"""
+    df_draft_stats = df_draft\
         .merge(df_player_stats, how='left')\
         .dropna(axis=0)\
         .rename(columns={'Pro Team': 'ProTeam', 'Acquired by': 'Team'})
+    return df_draft_stats
 
+def build_df_acq_stats(df_acq,df_player_stats):
+    """Merge acquisitions data with player stats fields"""
+    df_acq_stats = df_acq\
+        .merge(df_player_stats,how='left')\
+        .drop(['Pro Team'],axis=1)
+    return df_acq_stats
 
-def build_df_acq_final(season_start_date, df_draft_acq, df_acq):
-    """
+def build_df_acq_final(season_start_date, df_draft_acq, df_acq, drafted_players):
+    """ Merges draft AND waiver acquisitions dataframe to generate master acquisitions dataframe
 
     Args:
         season_start_date:
@@ -262,7 +282,27 @@ def build_df_acq_final(season_start_date, df_draft_acq, df_acq):
     df_draft_acq['Action Timestamp'] = draft_time.date()
     df_draft_acq['Timestamp'] = int(draft_time.timestamp() * 1000)
 
-    return pd.concat([df_draft_acq, df_acq], axis=0)
+    df_acq_final = pd.concat([df_draft_acq, df_acq], axis=0)
+
+    # df['name'].apply(lambda x: 'John Smith' if x.str.contains('John') else 'Other')
+
+    # df_acq_final.loc[df_acq_final['Action'].str.contains('ADDED'), 'Added_Dropped'] = 'ADDED'
+    # df_acq_final.loc[~df_acq_final['Action'].str.contains('ADDED'), 'Added_Dropped'] = 'DROPPED'
+
+    df_acq_final['Added_Dropped'] = df_acq_final['Action'].apply(lambda x: 'ADDED' if 'ADDED' in x else 'DROPPED')
+
+    df_acq_final.loc[df_acq_final['Player'].isin(drafted_players), 'Drafted'] = True
+    df_acq_final.loc[~df_acq_final['Player'].isin(drafted_players), 'Drafted'] = False
+
+    # TODO: build a feature to handle real life free agents, example: Derek Carr in 2022
+    # can use nfl_py players database for extracting players' last team within season of interest
+    # For now, drop players who were rostered, but are not on a ProTeam currently
+    # (i.e. players who were waived in a real life team)
+    # There can be a next feature to handle these exceptions
+    df_acq_final = df_acq_final[~(df_acq_final['ProTeam'] == 'None')]
+
+
+    return df_acq_final
 
 
 def build_df_player_box_scores(league, wk_ls):
@@ -296,38 +336,136 @@ def build_df_player_box_scores(league, wk_ls):
         df = pd.DataFrame(rows, columns=['Player', 'Position', 'Week', 'Team', 'Total points'])
         dfs.append(df)
 
-    return pd.concat(dfs, ignore_index=True)
+    df_player_box_scores = pd.concat(dfs, ignore_index=True)
+    return df_player_box_scores
 
-def get_stint_start(df_test_acq, idx):
-    """ Get date of start of a given player's stint on a fantasy team
+
+def get_df_test_acq_bid(df_test_acq):
+    """
 
     Args:
         df_test_acq:
-        idx:
 
     Returns:
 
     """
-    stint_start = df_test_acq.loc[idx, 'Action Timestamp']
-    action1 = df_test_acq.loc[idx, 'Action']
-    return stint_start, action1
+    df_test_acq_bid = df_test_acq.copy()
+    df_test_acq_bid = df_test_acq_bid.rename(columns={'Action Timestamp': 'Added'})
+    df_test_acq_bid = df_test_acq_bid[['Player', 'Team', 'Bid Amount ($)', 'Added']]
+    return df_test_acq_bid
 
 
-def get_stint_end(df_test_acq, idx, is_current):
-    """ Get end of stint given a player's stint on a fantasy team"""
-    # If player is currently on a fantasy team
-    if is_current:
-         stint_end = dt.date.today()
+def pivot_df_acq_oneplayer(df_test_acq):
+    """
+
+    Args:
+        df_test_acq:
+
+    Returns:
+
+    """
+    df_test_acq = df_test_acq.sort_values(by='Timestamp', ascending=True)
+    df_test_acq = df_test_acq.reset_index(drop=True)
+    df_test_acq = df_test_acq[['Player', 'Team', 'ProTeam', 'Action Timestamp', 'Added_Dropped']]
+    index_ls = list(range(df_test_acq.shape[0]))
+    df_test_acq['Action_GroupId'] = list(itertools.chain(*[2 * [i] for i in list(range(df_test_acq.shape[0]))]))[
+                                    :len(index_ls)]
+
+    df_test_acq = df_test_acq.pivot(index=['Player', 'Team', 'ProTeam', 'Action_GroupId'], columns='Added_Dropped') \
+        .reset_index() \
+        .sort_values(by='Action_GroupId')
+
+    df_test_acq.columns = [f'{i}|{j}' if j != '' else f'{i}' for i, j in df_test_acq.columns]
+
+    df_test_acq = df_test_acq.rename(columns={'Action Timestamp|ADDED': 'Added',
+                                              'Action Timestamp|DROPPED': 'Dropped'})
+
+    return df_test_acq
+
+
+# get stints on each fantasy team
+
+def get_stints(proteam, added, dropped, df_proteam_schedule):
+    """ Function that maps add, drop dates, NFL team-specific schedule, to the weeks that the fantasy player was
+    on a given fantasy team
+
+    Args:
+        proteam:
+        added:
+        dropped:
+        df_proteam_schedule:
+
+    Returns:
+        stint_ls (list): weeks on given fantasy team, excluding BYE weeks
+
+    """
+    proteam_schedule = df_proteam_schedule[proteam]
+    if pd.isna(dropped):
+        stint_ls = proteam_schedule[(proteam_schedule >= added)].keys().tolist()
     else:
-        stint_end = df_test_acq.loc[idx+1 , 'Action Timestamp']
-    return stint_end
+        stint_ls = proteam_schedule[(proteam_schedule >= added) & (proteam_schedule < dropped)].keys().tolist()
+    return stint_ls
 
 
-def get_stint_wks(df_proteam_schedules_one_team, stint_start, stint_end):
-    """Generates a list of weeks of a given stint"""
-    return df_proteam_schedules_one_team[(df_proteam_schedules_one_team['Game Date'] >= stint_start)
-                                                & (df_proteam_schedules_one_team['Game Date'] < stint_end)
-                                                ]['Week'].tolist()
+def build_df_stints(df_acq_final, df_proteam_schedule, df_player_stats, drafted_players):
+    """
+    Wrapper to construct master stints dataframe
+    Args:
+        df_acq_final:
+        df_proteam_schedule:
+
+    Returns:
+
+    """
+    g = df_acq_final.groupby(by=['Player'])
+    df_ls = []
+    for key in list(g.groups.keys()):
+        df_test_acq = g.get_group(key)
+        df_test_acq_bid = get_df_test_acq_bid(df_test_acq)
+        df_test_acq = pivot_df_acq_oneplayer(df_test_acq)\
+            .merge(df_test_acq_bid, how='left')\
+            .drop(['Action_GroupId'],axis=1)
+        df_ls.append(df_test_acq)
+
+    df_stints = pd.concat(df_ls,axis=0)
+
+    df_stints['Added'] = df_stints['Added'].apply(lambda x: pd.Timestamp(x) if not pd.isna(x) else x)
+    df_stints['Dropped'] = df_stints['Dropped'].apply(lambda x: pd.Timestamp(x) if not pd.isna(x) else x)
+
+    df_stints['Stint (wks)'] = df_stints.\
+        apply(lambda x: get_stints(x['ProTeam'],x['Added'],x['Dropped'],df_proteam_schedule),axis=1)
+
+    df_stints['Position'] = df_stints['Player'].map(dict(zip(df_player_stats['Player'], df_player_stats['Position'])))
+
+    # set index on each stint event
+    df_stints = df_stints.reset_index().reset_index() \
+        .rename(columns={'level_0': 'Stint_id'}) \
+        .drop('index', axis=1)
+
+    df_stints.loc[df_stints['Player'].isin(drafted_players), 'Drafted'] = True
+    df_stints['Drafted'] = df_stints['Drafted'].fillna(False)
+
+    return df_stints
+
+
+def build_df_points_scored(df_stints, df_player_box_scores):
+    df_stints_long = df_stints.explode(['Stint (wks)'])
+    df_stints_long = df_stints_long.rename(columns={'Stint (wks)': 'Week'})
+    df_points_scored = df_stints_long.merge(df_player_box_scores, how='inner')
+    total_pts = pd.DataFrame(data=df_points_scored.groupby(by='Stint_id')['Total points'].agg(sum)).reset_index()
+    return df_stints_long, total_pts
+
+
+def merge_total_pts_with_df_stints(df_stints, total_pts):
+    df_stints = df_stints.merge(total_pts)
+    return df_stints
+
+
+def build_df_waiver(df_stints):
+    df_waiver = df_stints[~df_stints['Drafted']]
+    return df_waiver
+
+
 
 
 
