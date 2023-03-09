@@ -4,7 +4,6 @@ import itertools
 import numpy as np
 import pandas as pd
 from espn_api.football import League
-from espn_api.football import activity
 
 
 def fetch_espn_api(league_id, year, espn_s2, swid):
@@ -464,6 +463,14 @@ def merge_total_pts_with_df_stints(df_stints, total_pts):
 def build_df_waiver(df_stints):
     df_waiver = df_stints[~df_stints['Drafted']]
     return df_waiver
+
+
+def get_total_pts_per_player(player,stint, df_player_box_scores):
+    if stint:
+        g = df_player_box_scores.groupby(by='Player')
+        df = g.get_group(player)
+        return df[df['Week'].isin(stint)]['Total points'].sum()
+
 
 
 
