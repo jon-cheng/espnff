@@ -67,13 +67,12 @@ def get_wideform_nfl_schedule(df):
     df = df.astype({"Week": int})
     # pivot NFL schedule to wideform
     df = df[["Week", "Date", "Pro_team_abbrev"]]
-    df = df.rename(columns={"Pro_team_abbrev":"ProTeam"})
+    df = df.rename(columns={"Pro_team_abbrev": "ProTeam"})
     df = df.pivot(index="Week", columns="ProTeam", values="Date")
 
     df = df.applymap(
-        lambda x: pd.to_datetime(x, format="%Y-%m-%d") if not pd.isna(x) else x) \
-        .applymap(lambda x: pd.Timestamp(x) if not pd.isna(x) else x)
-
+        lambda x: pd.to_datetime(x, format="%Y-%m-%d") if not pd.isna(x) else x
+    ).applymap(lambda x: pd.Timestamp(x) if not pd.isna(x) else x)
 
     # df = df.pivot(index="Week", columns="ProTeam", values="Date").fillna("BYE")
     # df = df.applymap(
@@ -121,4 +120,4 @@ def get_season_start_date(df):
     Returns: (datetime object) NFL season start date
 
     """
-    return pd.melt(df)[~pd.melt(df)['value'].isin(['BYE'])]['value'].min()
+    return pd.melt(df)[~pd.melt(df)["value"].isin(["BYE"])]["value"].min()
