@@ -6,6 +6,7 @@ import pandas as pd
 from espn_api.football import League
 
 
+
 def fetch_espn_api(league_id, year, espn_s2, swid):
     """Uses espn_api to fetch league data
 
