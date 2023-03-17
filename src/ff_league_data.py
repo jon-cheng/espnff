@@ -432,7 +432,7 @@ def get_stints(proteam, added, dropped, df_proteam_schedule):
 
 
 def build_df_stints(
-    df_acq_final, df_proteam_schedule, df_player_stats, drafted_players
+    df_acq_final, df_proteam_schedule, df_player_stats, drafted_players, df_player_box_scores
 ):
     """
     Wrapper to construct master stints dataframe
@@ -486,6 +486,13 @@ def build_df_stints(
     df_stints.loc[df_stints["Player"].isin(drafted_players), "Drafted"] = True
     df_stints["Drafted"] = df_stints["Drafted"].fillna(False)
 
+    def adjust_stints_to_fantasy_schedule(stint, df_player_box_scores):
+        fantasy_weeks = df_player_box_scores['Week'].unique().tolist()
+        return list(set(fantasy_weeks) & set(stint))
+
+    df_stints['Stint (wks)'] = df_stints.apply(
+        lambda x: adjust_stints_to_fantasy_schedule(x['Stint (wks)'], df_player_box_scores), axis=1)
+
     return df_stints
 
 
@@ -514,3 +521,8 @@ def get_total_pts_per_player(player, stint, df_player_box_scores):
         g = df_player_box_scores.groupby(by="Player")
         df = g.get_group(player)
         return df[df["Week"].isin(stint)]["Total points"].sum()
+
+
+def adjust_stints_to_fantasy_schedule(stint, df_player_box_scores):
+    fantasy_weeks = df_player_box_scores['Week'].unique().tolist()
+    return list(set(fantasy_weeks) & set(stint))
