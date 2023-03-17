@@ -1,0 +1,2 @@
+[console_scripts]
+tcra = tcr_assay.__main__:main
