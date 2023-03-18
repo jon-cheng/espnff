@@ -2,17 +2,27 @@ import pandas as pd
 import altair as alt
 
 
-def scatterplot_acquisitions(df_stints, position, acq_by_draft):
-    df = df_stints.groupby(by=["Drafted", "Position"]).get_group(
-        (acq_by_draft, position)
-    )
+def scatterplot_acquisitions(df_stints, select_acq_method=None, select_positions=None):
+    if select_acq_method is None:
+        select_acq_method = [True]
 
-    if acq_by_draft:
+    if select_positions is None:
+        select_positions = ['RB', 'WR', 'TE']
+
+    g = df_stints.groupby(by=["Drafted", "Position"])
+
+    df = pd.concat([g.get_group((acq_by_draft, position))
+                    for acq_by_draft in select_acq_method
+                    for position in select_positions], axis=0)
+
+    if select_acq_method[0]:
         status = "Draft"
     else:
         status = "Waiver"
 
-    plot_title = f"Position: {position} , Acquired by: {status}"
+    positions = ', '.join(select_positions)
+
+    plot_title = f"Position: {positions} , Acquired by: {status}"
     selection = alt.selection_multi(fields=["Team"], bind="legend")
 
     color = alt.condition(
