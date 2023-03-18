@@ -1,6 +1,4 @@
-import nfl_schedule as ns
-import ff_league_data as ff
-import calc_best_waiver as calc
+import pipeline
 import argparse
 from espnff_analysis import __version__
 
