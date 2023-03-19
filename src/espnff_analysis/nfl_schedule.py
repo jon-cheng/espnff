@@ -1,6 +1,10 @@
 import os
 import numpy as np
 import pandas as pd
+import pkg_resources as pkg
+
+# data_file = pkg.resource_string(__name__, 'data/data_file.txt')
+# # data = data_file.decode('utf-8')
 
 
 def mine_nfl_schedule(year_of_interest: int):
@@ -87,7 +91,7 @@ def get_wideform_nfl_schedule(df):
 
 
 def get_nfl_schedule(
-    year_of_interest, data_path=r"/Users/jonathancheng/PycharmProjects/espnff/data"
+    year_of_interest, data_path=r"/Users/jonathancheng/PycharmProjects/espnff/espnff_analysis/data"
 ):
     """_summary_
 
