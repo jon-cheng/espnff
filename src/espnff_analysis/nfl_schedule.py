@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import pkg_resources as pkg
+import io
 
 # data_file = pkg.resource_string(__name__, 'data/data_file.txt')
 # # data = data_file.decode('utf-8')
@@ -90,6 +91,11 @@ def get_wideform_nfl_schedule(df):
     return df
 
 
+def get_team_abbrev():
+    data_file = pkg.resource_string('espnff_analysis', 'data/team_abbrev_conversion.csv').decode('utf-8')
+    df_proteam_names = pd.read_csv(io.StringIO(data_file))
+    return df_proteam_names
+
 def get_nfl_schedule(
     year_of_interest, data_path=r"/Users/jonathancheng/PycharmProjects/espnff/espnff_analysis/data"
 ):
@@ -103,9 +109,11 @@ def get_nfl_schedule(
         _type_: _description_
     """
 
-    df_proteam_names = pd.read_csv(
-        os.path.join(data_path, "team_abbrev_conversion.csv")
-    )
+    # df_proteam_names = pd.read_csv(
+    #     os.path.join(data_path, "team_abbrev_conversion.csv")
+    # )
+    df_proteam_names = get_team_abbrev()
+    
     for col in df_proteam_names.columns:
         df_proteam_names[col] = df_proteam_names[col].str.strip()
 
