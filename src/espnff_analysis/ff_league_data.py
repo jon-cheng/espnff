@@ -22,7 +22,7 @@ def fetch_espn_api(league_id, year, espn_s2, swid):
     return League(league_id=league_id, year=year, espn_s2=espn_s2, swid=swid)
 
 
-@retry.retry(tries=6, delay=3)
+@retry.retry(tries=10, delay=3)
 def get_league_activity(league, n_iter=1000000):
     return league.recent_activity(n_iter)
 
@@ -31,7 +31,8 @@ def try_get_league_activity(league):
     try:
         print("Fetching league data from espn_api ...")
         return get_league_activity(league)
-    except requests.exceptions.ConnectionError:
+    # except requests.exceptions.ConnectionError:
+    except:
         raise ConnectionError(
             "Could not fetch league data, try re-running the program."
         )

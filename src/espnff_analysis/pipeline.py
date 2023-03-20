@@ -1,7 +1,7 @@
 import os
 from espnff_analysis import nfl_schedule as nf
 from espnff_analysis import ff_league_data as ff
-import calc_best_waiver as cbw
+from espnff_analysis import calc_best_waiver as cbw
 
 
 def get_nfl_schedule_info(year_of_interest):
