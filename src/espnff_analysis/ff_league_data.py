@@ -8,7 +8,6 @@ import pandas as pd
 from espn_api.football import League
 
 
-
 def fetch_espn_api(league_id, year, espn_s2, swid):
     """Uses espn_api to fetch league data
 
@@ -23,8 +22,8 @@ def fetch_espn_api(league_id, year, espn_s2, swid):
     return League(league_id=league_id, year=year, espn_s2=espn_s2, swid=swid)
 
 
-@retry.retry(tries=6,delay=3)
-def get_league_activity(league , n_iter=1000000):
+@retry.retry(tries=6, delay=3)
+def get_league_activity(league, n_iter=1000000):
     return league.recent_activity(n_iter)
 
 
@@ -33,7 +32,9 @@ def try_get_league_activity(league):
         print("Fetching league data from espn_api ...")
         return get_league_activity(league)
     except requests.exceptions.ConnectionError:
-        raise ConnectionError("Could not fetch league data, try re-running the program.")
+        raise ConnectionError(
+            "Could not fetch league data, try re-running the program."
+        )
 
 
 def get_weeks(league):
@@ -437,7 +438,11 @@ def get_stints(proteam, added, dropped, df_proteam_schedule):
 
 
 def build_df_stints(
-    df_acq_final, df_proteam_schedule, df_player_stats, drafted_players, df_player_box_scores
+    df_acq_final,
+    df_proteam_schedule,
+    df_player_stats,
+    drafted_players,
+    df_player_box_scores,
 ):
     """
     Wrapper to construct master stints dataframe
@@ -492,11 +497,15 @@ def build_df_stints(
     df_stints["Drafted"] = df_stints["Drafted"].fillna(False)
 
     def adjust_stints_to_fantasy_schedule(stint, df_player_box_scores):
-        fantasy_weeks = df_player_box_scores['Week'].unique().tolist()
+        fantasy_weeks = df_player_box_scores["Week"].unique().tolist()
         return list(set(fantasy_weeks) & set(stint))
 
-    df_stints['Stint (wks)'] = df_stints.apply(
-        lambda x: adjust_stints_to_fantasy_schedule(x['Stint (wks)'], df_player_box_scores), axis=1)
+    df_stints["Stint (wks)"] = df_stints.apply(
+        lambda x: adjust_stints_to_fantasy_schedule(
+            x["Stint (wks)"], df_player_box_scores
+        ),
+        axis=1,
+    )
 
     return df_stints
 
@@ -529,5 +538,5 @@ def get_total_pts_per_player(player, stint, df_player_box_scores):
 
 
 def adjust_stints_to_fantasy_schedule(stint, df_player_box_scores):
-    fantasy_weeks = df_player_box_scores['Week'].unique().tolist()
+    fantasy_weeks = df_player_box_scores["Week"].unique().tolist()
     return list(set(fantasy_weeks) & set(stint))

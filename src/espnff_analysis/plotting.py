@@ -7,20 +7,25 @@ def scatterplot_acquisitions(df_stints, select_acq_method=None, select_positions
         select_acq_method = [True]
 
     if select_positions is None:
-        select_positions = ['RB', 'WR', 'TE']
+        select_positions = ["RB", "WR", "TE"]
 
     g = df_stints.groupby(by=["Drafted", "Position"])
 
-    df = pd.concat([g.get_group((acq_by_draft, position))
-                    for acq_by_draft in select_acq_method
-                    for position in select_positions], axis=0)
+    df = pd.concat(
+        [
+            g.get_group((acq_by_draft, position))
+            for acq_by_draft in select_acq_method
+            for position in select_positions
+        ],
+        axis=0,
+    )
 
     if select_acq_method[0]:
         status = "Draft"
     else:
         status = "Waiver"
 
-    positions = ', '.join(select_positions)
+    positions = ", ".join(select_positions)
 
     plot_title = f"Position: {positions} , Acquired by: {status}"
     selection = alt.selection_multi(fields=["Team"], bind="legend")

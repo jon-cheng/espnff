@@ -93,12 +93,16 @@ def get_wideform_nfl_schedule(df):
 
 
 def get_team_abbrev():
-    data_file = pkg.resource_string(espnff_analysis.__name__, 'data/team_abbrev_conversion.csv').decode('utf-8')
+    data_file = pkg.resource_string(
+        espnff_analysis.__name__, "data/team_abbrev_conversion.csv"
+    ).decode("utf-8")
     df_proteam_names = pd.read_csv(io.StringIO(data_file))
     return df_proteam_names
 
+
 def get_nfl_schedule(
-    year_of_interest, data_path=r"/Users/jonathancheng/PycharmProjects/espnff/espnff_analysis/data"
+    year_of_interest,
+    data_path=r"/Users/jonathancheng/PycharmProjects/espnff/espnff_analysis/data",
 ):
     """_summary_
 

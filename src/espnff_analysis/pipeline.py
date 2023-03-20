@@ -1,6 +1,6 @@
-import nfl_schedule as nf
-import ff_league_data as ff
-# import calc_best_waiver as calc
+from espnff_analysis import nfl_schedule as nf
+from espnff_analysis import ff_league_data as ff
+import calc_best_waiver as cbw
 
 
 def get_nfl_schedule_info(year_of_interest):
@@ -53,22 +53,28 @@ def main_pipeline(league_id, year, espn_s2, swid):
     df_player_stats = ff.build_df_player_stats(df_rostered, df_FA)
     df_draft_stats = ff.build_df_draft_stats(df_draft, df_player_stats)
     df_acq_stats = ff.build_df_acq_stats(df_acq, df_player_stats)
-    df_acq_final = ff.build_df_acq_final(season_start_date, df_draft_stats, df_acq_stats, drafted_players)
+    df_acq_final = ff.build_df_acq_final(
+        season_start_date, df_draft_stats, df_acq_stats, drafted_players
+    )
     # Get player_box_scores from fantasy season
     df_player_box_scores = ff.build_df_player_box_scores(league, wk_ls)
-    df_stints = ff.build_df_stints(df_acq_final, df_proteam_schedule, df_player_stats, drafted_players,
-                                   df_player_box_scores)
-    df_stints['Total points per stint'] = df_stints.apply(
-        lambda x: ff.get_total_pts_per_player(x['Player'], x['Stint (wks)'], df_player_box_scores), axis=1).fillna(0)
+    df_stints = ff.build_df_stints(
+        df_acq_final,
+        df_proteam_schedule,
+        df_player_stats,
+        drafted_players,
+        df_player_box_scores,
+    )
+    df_stints["Total points per stint"] = df_stints.apply(
+        lambda x: ff.get_total_pts_per_player(
+            x["Player"], x["Stint (wks)"], df_player_box_scores
+        ),
+        axis=1,
+    ).fillna(0)
 
-    return df_stints
+    df_stints, df_player_ffteam = cbw.get_quantile_and_weeks(
+        df_stints, df_player_box_scores
+    )
+    df_waiver = cbw.get_waiver_data(df_player_ffteam)
 
-
-
-
-
-
-
-
-
-
+    return df_stints, df_waiver
