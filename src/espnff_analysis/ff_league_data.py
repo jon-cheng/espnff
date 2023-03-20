@@ -27,7 +27,8 @@ def fetch_espn_api(league_id, year, espn_s2, swid):
 def get_league_activity(league , n_iter=1000000):
     return league.recent_activity(n_iter)
 
-def get_league_activity_wrapper(league):
+
+def try_get_league_activity(league):
     try:
         print("Fetching league data from espn_api ...")
         return get_league_activity(league)
