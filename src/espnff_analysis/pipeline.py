@@ -1,3 +1,4 @@
+import os
 from espnff_analysis import nfl_schedule as nf
 from espnff_analysis import ff_league_data as ff
 import calc_best_waiver as cbw
@@ -42,7 +43,7 @@ def get_acquisitions_data(activity_ls):
     return df_acq
 
 
-def main_pipeline(league_id, year, espn_s2, swid):
+def main_pipeline(league_id, year, espn_s2, swid, path):
     df_proteam_schedule, season_start_date = get_nfl_schedule_info(year)
     league, activity_ls, wk_ls = fetch_league_data(league_id, year, espn_s2, swid)
     df_acq = get_acquisitions_data(activity_ls)
@@ -77,4 +78,7 @@ def main_pipeline(league_id, year, espn_s2, swid):
     )
     df_waiver = cbw.get_waiver_data(df_player_ffteam)
 
-    return df_stints, df_waiver
+    df_stints.to_csv(os.path.join(path, f"df_stints_{year}.csv"))
+    df_waiver.to_csv(os.path.join(path, f"df_waiver_{year}.csv"))
+
+    return

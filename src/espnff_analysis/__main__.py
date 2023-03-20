@@ -41,6 +41,14 @@ def parse_args():
         required=True,
     )
 
+    parser.add_argument(
+        "path",
+        "p",
+        type=str,
+        help="output path",
+        required=True,
+    )
+
     parser.add_argument("--version", "-v", action="version", version=__version__)
 
     return parser
@@ -49,7 +57,8 @@ def parse_args():
 def main():
     parser = parse_args()
     args = parser.parse_args()
-    # args.year
+    pp.main_pipeline(args.league_id, args.year, args.s2, args.swid, args.path)
+    return
 
 
 if __name__ == "__main__":

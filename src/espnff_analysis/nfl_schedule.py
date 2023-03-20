@@ -5,9 +5,6 @@ import pkg_resources as pkg
 import io
 import espnff_analysis
 
-# data_file = pkg.resource_string(__name__, 'data/data_file.txt')
-# # data = data_file.decode('utf-8')
-
 
 def mine_nfl_schedule(year_of_interest: int):
     """Mines pro-football
