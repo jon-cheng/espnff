@@ -16,7 +16,11 @@ def mine_nfl_schedule(year_of_interest: int):
         _type_: _description_
     """
     url = f"https://www.pro-football-reference.com/years/{year_of_interest}/games.htm"
-    return pd.read_html(url)[0]
+    try:
+        return pd.read_html(url)[0]
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
 
 def format_nfl_schedule(df, df_proteam_names):
