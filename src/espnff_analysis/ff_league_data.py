@@ -31,10 +31,18 @@ def try_get_league_activity(league):
     try:
         print("Fetching league data from espn_api ...")
         return get_league_activity(league)
+    except requests.exceptions.Timeout:
+        raise ConnectionError(
+            "The request timed out. Could not fetch league data, try re-running the program."
+        )
     # except requests.exceptions.ConnectionError:
-    except:
+    except requests.exceptions.ConnectionError:
         raise ConnectionError(
             "Could not fetch league data, try re-running the program."
+        )
+    except requests.exceptions.RequestException:
+        raise ConnectionError(
+            "An unknown error occurred. Could not fetch league data, try re-running the program."
         )
 
 
@@ -376,16 +384,28 @@ def pivot_df_acq_oneplayer(df_test_acq):
     Returns:
 
     """
-    df_test_acq = df_test_acq.sort_values(by="Timestamp", ascending=True)
     df_test_acq = df_test_acq.reset_index(drop=True)
     df_test_acq = df_test_acq[
-        ["Player", "Team", "ProTeam", "Action Timestamp", "Added_Dropped"]
+        ["Player", "Team", "Position", "ProTeam", "Total points", "Action Timestamp", "Added_Dropped"]
     ]
+
+    # in corner cases where a player is eligible for multiple positions,
+    # then take the max (first) highest Total points,
+    # usually the alternative position is 0 as an artifact from espn_api
+    df_test_acq_dedup = df_test_acq.groupby(by=['Player', 'Team', 'Action Timestamp']).agg(
+        {'Total points': 'first'}).reset_index()
+    df_test_acq = df_test_acq_dedup.merge(df_test_acq)
+    df_test_acq = df_test_acq.sort_values(by="Action Timestamp", ascending=True)
+
     index_ls = list(range(df_test_acq.shape[0]))
+
     df_test_acq["Action_GroupId"] = list(
         itertools.chain(*[2 * [i] for i in list(range(df_test_acq.shape[0]))])
     )[: len(index_ls)]
 
+    df_test_acq = df_test_acq.drop(['Total points', 'Position'], axis=1)
+
+    # TODO: fix pivot error, test on 2019 data, use pivot_table as fix
     df_test_acq = (
         df_test_acq.pivot(
             index=["Player", "Team", "ProTeam", "Action_GroupId"],

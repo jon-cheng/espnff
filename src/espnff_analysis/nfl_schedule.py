@@ -77,15 +77,12 @@ def get_wideform_nfl_schedule(df):
         lambda x: pd.to_datetime(x, format="%Y-%m-%d") if not pd.isna(x) else x
     ).applymap(lambda x: pd.Timestamp(x) if not pd.isna(x) else x)
 
-    # df = df.pivot(index="Week", columns="ProTeam", values="Date").fillna("BYE")
-    # df = df.applymap(
-    #     lambda x: pd.to_datetime(x, format="%Y-%m-%d") if x != "BYE" else x
-    # )
-    # df = df.applymap(
-    #     lambda x: pd.Timestamp(x) if x != "BYE" else x
-    # )
-    #
-    # df = df.replace('BYE', np.nan)
+    try:
+        assert (len(df.columns) == 32)
+    except AssertionError:
+        print(
+            "All NFL team schedule does not contain 32 teams, check if team names from Pro-Football Reference match to team abbreviations list")
+
     return df
 
 
