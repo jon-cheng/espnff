@@ -260,8 +260,11 @@ def build_df_FA(league):
 
 
 def build_df_player_stats(df_rostered, df_FA):
-    """Join the rostered and free agent player universes to get all player stats"""
+    """Join the rostered and free agent player universes to get all player stats
+    If a player is eligible for multiple positions, function ensures de-duplication of player records"""
     df_player_stats = pd.concat([df_rostered, df_FA], axis=0)
+    df_player_stats = df_player_stats.sort_values(by='Total points', ascending=False) \
+        .drop_duplicates(subset='Player')
     return df_player_stats
 
 
