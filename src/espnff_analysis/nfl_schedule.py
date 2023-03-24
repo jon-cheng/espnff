@@ -48,6 +48,10 @@ def format_nfl_schedule(df, df_proteam_names):
     df["Pro_team"] = df["Pro_team"].str.replace(
         pat=r"^Washington.*", repl="Washington", regex=True
     )
+    # handle special case of Raiders, which has changed cities over years
+    df["Pro_team"] = df["Pro_team"].str.replace(
+        pat=r"^.*Raiders", repl="Raiders", regex=True
+    )
 
     df["Pro_team_abbrev"] = df["Pro_team"].map(
         dict(zip(df_proteam_names["Pro Team Name"], df_proteam_names["Abbrev"]))
