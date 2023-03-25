@@ -46,6 +46,8 @@ def get_acquisitions_data(activity_ls):
 def main_pipeline(league_id, year, espn_s2, swid, path):
     df_proteam_schedule, season_start_date = get_nfl_schedule_info(year)
     league, activity_ls, wk_ls = fetch_league_data(league_id, year, espn_s2, swid)
+
+    print("Wrangling fantasy data...")
     df_acq = get_acquisitions_data(activity_ls)
     df_draft, drafted_players = ff.build_df_draft(league)
     df_rostered = ff.build_df_rostered(league)
@@ -78,7 +80,10 @@ def main_pipeline(league_id, year, espn_s2, swid, path):
     )
     df_waiver = cbw.get_waiver_data(df_player_ffteam)
 
+    print("writing results out...")
     df_stints.to_csv(os.path.join(path, f"df_stints_{year}.csv"))
     df_waiver.to_csv(os.path.join(path, f"df_waiver_{year}.csv"))
+
+    print("Done")
 
     return
