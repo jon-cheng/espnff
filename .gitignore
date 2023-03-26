@@ -78,6 +78,7 @@ cover/
 target/
 
 # Jupyter Notebook
+notebooks/
 .ipynb_checkpoints
 .ipynb
 
