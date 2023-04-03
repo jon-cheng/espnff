@@ -78,12 +78,16 @@ def main_pipeline(league_id, year, espn_s2, swid, path):
     df_stints, df_player_ffteam = cbw.get_quantile_and_weeks(
         df_stints, df_player_box_scores
     )
+
+    df_stints_long = df_stints.explode('Stint (wks)')
+
     df_waiver = cbw.get_waiver_data(df_player_ffteam)
 
     print("writing results out...")
     df_stints.to_csv(os.path.join(path, f"df_stints_{year}.csv"))
     df_waiver.to_csv(os.path.join(path, f"df_waiver_{year}.csv"))
+    df_stints_long.to_csv(os.path.join(path, f"df_stints_long_{year}.csv"))
 
     print("Done")
 
-    return
+    return df_stints_long
