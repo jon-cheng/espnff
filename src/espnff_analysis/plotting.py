@@ -3,6 +3,16 @@ import altair as alt
 
 
 def scatterplot_acquisitions(df_stints, select_acq_method=None, select_positions=None):
+    """
+
+    Args:
+        df_stints:
+        select_acq_method (list): list of Boolean, default = [True]
+        select_positions (list): list of positions to display, default = ["RB", "WR", "TE"]
+
+    Returns:
+
+    """
     if select_acq_method is None:
         select_acq_method = [True]
 
