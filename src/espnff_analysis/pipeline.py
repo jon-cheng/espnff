@@ -90,4 +90,4 @@ def main_pipeline(league_id, year, espn_s2, swid, path):
 
     print("Done")
 
-    return df_stints_long
+    return df_stints,df_stints_long
